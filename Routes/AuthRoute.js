@@ -1,17 +1,17 @@
-const {Router} =require("express")
-const {Auth,Register,Forgetpassword,Resetpassword} =require("../Controllers/AuthController")
-const Route = Router()
+const Route= require('express').Router();
+const {auth,Register,Forgetpassword,Resetpassword} =require("../Controllers/AuthController")
 
-//! Method = Post , URL = Auth , Access =
-Route.post('Api/Auth ',Auth)
 
-//! Method = Post , URL = Register , Access =
-Route.post('Api/Register ',Register)
+//* Method = Post , URL = Auth , Access = public
+Route.post('/auth',auth)
 
-//! Method = Post , URL = Forgetpassword , Access =
-Route.post('Api/Resetpassword ',Forgetpassword)
+//* Method = Post , URL = Register , Access = public
+Route.post('/Register',Register)
 
-//! Method = Post , URL = Auth , Access =
-Route.post('Api/Resetpassword ',Resetpassword)
+//* Method = Post , URL = Forgetpassword , Access = public
+Route.post('/api/Resetpassword',Forgetpassword)
+
+//* Method = Post , URL = Auth , Access = public
+Route.post('/api/Resetpassword',Resetpassword)
 
 module.exports=Route;

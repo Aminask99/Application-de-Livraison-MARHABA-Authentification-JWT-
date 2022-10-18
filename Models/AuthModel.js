@@ -1,6 +1,7 @@
  const mongoose = require('mongoose');
+ const Schema =mongoose.Schema
 
- const Schema =new mongoose.Schema({
+ const UserSchema =new Schema({
     Name: {
         type: String,
         required: true,
@@ -18,16 +19,9 @@
         required: true,
         min:6
     },
-    status: {
-        type: Boolean,
-        default:false
-        
-    },
-    token:{
-        type: String,
-        required: true
-    }
+   
 
  });
  
-module.exports= mongoose.model("userdb",Schema)
+ const User = mongoose.model('User',UserSchema)
+module.exports= User

@@ -1,40 +1,80 @@
-const AuthModel =require("../Models/AuthModel")
+const User = require("../Models/AuthModel")
+const bcrypt = require("bcryptjs")
+const jwt = require('jsonwebtoken')
 
-// *api /login/login=>Public:Post
-function auth (req,res){
-
+const Register = (req,res,next) => {
    
+    
+   bcrypt.hash(req.body.Password, 10, function(err,hashedPass){
+
+if(err){
+    res.json({
+        error: err
+    })
 }
 
-// *api /register/register=>Public:Post
 
-const Register=(req,res)=>{
-    const {body} = req
-    console.log(body)
+let user = new User({
+    Name:req.body.Name,
+    Email:req.body.Email,
+    Password:hashedPass,
+    status:req.body.status,
+    token:req.body.token
+   
+   })
+   user.save()
+   .then(user =>{
+    res.json({
+        message:'user added Successfully'
+    })
+   })
+   .catch(error=> {
+    res.json({
+        message:'error not creat user'
+    })
+   })
+   
+   })
+   
 
-AuthModel.create({...body})
-.then(() =>{
-    res.status(201).json({msg :"Created Ressource"})
+};
+
+const Auth =(req,res,next) =>{
+    
+    let UserName = req.body.UserName
+    let Password = req.body.Password
+    User.findOne({$or:[{Email:UserName}]})
+    
+    .then(user =>{
+        if(user){
+bcrypt.compare(Password, user.Password,function(err,result){
+
+    if(err){
+        res.json({
+            error:err
+        })
+    }
+    if(result){
+        let token = jwt.sign({Name: user.Name}, 'verySecretValue',{expiresIn:'1h'})
+        res.json({
+            message:'Login Succeful!',
+            token
+        })
+    }else{
+res.json({
+    message: "Password is not matched"
 })
-.catch(error => res.status(500).json(error))
 
-joi.validate(req.body)
+    }
+})
 
- };
-
-// *api /forgetpassword/forgetpassword=>Public:Post
-
-const Forgetpassword=(req,res)=>{
-    res.status(200).send('this a Forget Password function')
-    
-}
-
-// *api /resetpassword/resetpassword=>Public:Post
-
-const Resetpassword=(req,res)=>{
-    res.status(200).send('this a reset Password function of')
-    
+        }else{
+            res.json({
+                message:'no user found!'
+            })
+        }
+    })
 }
 
 
-module.exports={auth,Register,Forgetpassword,Resetpassword}
+module.exports={Register,Auth}

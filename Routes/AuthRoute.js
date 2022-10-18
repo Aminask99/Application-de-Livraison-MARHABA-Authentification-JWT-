@@ -1,17 +1,17 @@
 const Route= require('express').Router();
-const {auth,Register,Forgetpassword,Resetpassword} =require("../Controllers/AuthController")
+const {Register,Auth} =require("../Controllers/AuthController")
 
 
 //* Method = Post , URL = Auth , Access = public
-Route.post('/auth',auth)
+Route.post('/Auth',Auth)
 
 //* Method = Post , URL = Register , Access = public
 Route.post('/Register',Register)
 
 //* Method = Post , URL = Forgetpassword , Access = public
-Route.post('/api/Resetpassword',Forgetpassword)
+// Route.post('/api/Resetpassword',Forgetpassword)
 
 //* Method = Post , URL = Auth , Access = public
-Route.post('/api/Resetpassword',Resetpassword)
+// Route.post('/api/Resetpassword',Resetpassword)
 
 module.exports=Route;

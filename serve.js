@@ -2,17 +2,12 @@ const express = require("express")
 const app = express()
 const cennection =require('./config/db');
 const routerUser = require("./Routes/AuthRoute")
-const MoudelAuth = require('./Models/AuthModel');
-const jwt = require('jsonwebtoken');
+
+
 
 const  dotenv = require('dotenv');
 
 dotenv.config();
-
-
-
-
-
 
 
 app.use(express.json())

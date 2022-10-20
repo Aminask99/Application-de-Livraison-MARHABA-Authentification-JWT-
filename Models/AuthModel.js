@@ -20,7 +20,14 @@
         required: true,
         min:6
     },
-   
+    verified: {
+        type: Boolean,
+        default:false
+    
+    }, 
+    activationCode : {
+        type: String,
+    }
 
  });
  

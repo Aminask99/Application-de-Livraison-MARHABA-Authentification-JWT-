@@ -2,9 +2,41 @@
 const User = require("../Models/AuthModel")
 const bcrypt = require("bcryptjs")
 const jwt = require('jsonwebtoken')
+const nodemailer= require("nodemailer")
 
 
-// !api /login/login=>Public:Post
+//* nodemailer
+const trasporter = nodemailer.createTransport({
+    // servise:"Gmail",
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true, // use SSL
+    auth : {
+        user: "aminasalik012@gmail.com",
+        pass : "ygdlmgfylpgsihms"
+        
+    },
+    tls: {
+        rejectUnauthorized:false,
+    }
+    
+    });
+  const sendConfirmationEmail =(Email,activationCode)=>{
+        trasporter
+        .sendMail({
+            from:"aminasalik012@gmail.com",
+            to: Email,
+            subject:"sending mailusing for testing",
+            html: `<h1>hello World</h1>`
+            
+
+        })
+        .catch((err)=>
+        console.log(err))
+    }
+
+
+// !api/Auth=>Public:Post
 
 const Auth =(req,res,next) =>{
     
@@ -14,51 +46,59 @@ const Auth =(req,res,next) =>{
           User.findOne({$or:[{Email:UserName}]})
     
             .then(user =>{
-                if(user)
-            {
-                bcrypt.compare(Password, user.Password,function(err,result){
+                
+               
+                if(user){
+                    let PasswordValid = bcrypt.compareSync(req.body.Password, user.Password);
 
-                    if(err)
 
-                    {
-                        res.json({
-                            error:err
+                    if (!user ) {
+                        return res.send({
+                            message: "Email not find"
                         })
                     }
 
-                    if(result)
-
-                    {
-                        let token = jwt.sign({Name: user.Name}, 'verySecretValue',{expiresIn:'1h'})
-                        res.json({
-                            message:'Login Succeful!',
-                            token
-                        })
-
-                    }  else
-
-                    {
-                        res.json({
+                    if (!PasswordValid ) {
+                        return res.send({
                             message: "Password is not matched"
                         })
-
                     }
-                })
 
-            } else
+                    if (user && PasswordValid &&!user.verified) {
+                        return res.send({
+                            message: "activate email"
+                        })
+                    }else{
+                        res.json({
+                            message:'no user foun!'
+                        }) 
+                    }
 
-                {
+
+
+                }
+                if(user && PasswordValid && user.verified){
+                    let token = jwt.sign({Name: user.Name}, 'AzQ,PI)(',{expiresIn:'1h'})
                     res.json({
-                        message:'no user found!'
+                        message:'Login Succeful!',
+                        token
                     })
                 }
+    
             })
+         
 }
 
-// !api /register/register=>Public:Post
+// !api/register=>Public:Post
 
 const Register = (req,res,next) => {
-    
+const caracters =
+"0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+let activationCode ="";
+for (let i =0; i<25;i++){
+    activationCode+= caracters[Math.floor(Math.random() * caracters.length)];
+
+} 
     bcrypt.hash(req.body.Password, 10, function(err,hashedPass){
 
         if(err)
@@ -73,8 +113,7 @@ const Register = (req,res,next) => {
                 Name:req.body.Name,
                 Email:req.body.Email,
                 Password:hashedPass,
-                status:req.body.status,
-                token:req.body.token
+                activationCode: activationCode,
             
         })
                 user.save()
@@ -88,21 +127,40 @@ const Register = (req,res,next) => {
                 res.json({
                     message:'error not creat user'
                 })
-            })
-            
+            })  
+
+            sendConfirmationEmail(user.Email,user.activationCode)    
     })  
+  
 
 };
+//* verifyUser
+const verifyUser=(req,res)=>{
 
+ User.find({activationCode:req.params.activationCode })
+ .then(user=>{
+    if(!user){
+      res.send({
+        message:"not exestt",
+      });
+    }
+    user.verified= true
+    user.save();
+    res.send({
+        message:"le Compte est active"
+    })
+ })
 
-// !api /forgetpassword/forgetpassword=>Public:Post
+}
+
+// !api/forgetpassword=>Public:Post
 
 const Forgetpassword=(req,res)=>{
     res.status(200).send('this a Forget Password function')
     
 }
 
-// !api /resetpassword/resetpassword=>Public:Post
+// !api/resetpassword=>Public:Post
 
 const Resetpassword=(req,res)=>{
     res.status(200).send('this a reset Password function of')
@@ -110,4 +168,4 @@ const Resetpassword=(req,res)=>{
 }
 
 
-module.exports={Auth,Register,Forgetpassword,Resetpassword}
+module.exports={Auth,Register,verifyUser,Forgetpassword,Resetpassword}

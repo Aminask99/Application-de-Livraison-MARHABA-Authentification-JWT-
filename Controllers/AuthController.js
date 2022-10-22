@@ -2,39 +2,11 @@
 const User = require("../Models/AuthModel")
 const bcrypt = require("bcryptjs")
 const jwt = require('jsonwebtoken')
-const nodemailer= require("nodemailer")
+const nodemailer = require("../Utils/nodmailer")
+
 
 
 //* nodemailer
-const trasporter = nodemailer.createTransport({
-    // servise:"Gmail",
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true, // use SSL
-    auth : {
-        user: "aminasalik012@gmail.com",
-        pass : "ygdlmgfylpgsihms"
-        
-    },
-    tls: {
-        rejectUnauthorized:false,
-    }
-    
-    });
-  const sendConfirmationEmail =(Email,activationCode)=>{
-        trasporter
-        .sendMail({
-            from:"aminasalik012@gmail.com",
-            to: Email,
-            subject:"sending mailusing for testing",
-            html: `<h1>hello World</h1>`
-            
-
-        })
-        .catch((err)=>
-        console.log(err))
-    }
-
 
 // !api/Auth=>Public:Post
 
@@ -64,26 +36,21 @@ const Auth =(req,res,next) =>{
                         })
                     }
 
-                    if (user && PasswordValid &&!user.verified) {
+                    if (user && PasswordValid && user.verified) {
                         return res.send({
-                            message: "activate email"
+                            message: "Login Succeful!"
                         })
                     }else{
-                        res.json({
-                            message:'no user foun!'
+                        return res.send({
+                            message: "activate Gmail plz"
                         }) 
+                    
                     }
 
 
 
                 }
-                if(user && PasswordValid && user.verified){
-                    let token = jwt.sign({Name: user.Name}, 'AzQ,PI)(',{expiresIn:'1h'})
-                    res.json({
-                        message:'Login Succeful!',
-                        token
-                    })
-                }
+               
     
             })
          
@@ -136,20 +103,23 @@ for (let i =0; i<25;i++){
 };
 //* verifyUser
 const verifyUser=(req,res)=>{
-
- User.find({activationCode:req.params.activationCode })
- .then(user=>{
-    if(!user){
-      res.send({
-        message:"not exestt",
-      });
-    }
-    user.verified= true
-    user.save();
-    res.send({
-        message:"le Compte est active"
-    })
- })
+try{
+      User.findOneAndUpdate({activationCode:req.params.activationCode})
+        .then(user=>{
+            if(!user){
+           console.log("not carfimation")
+            }
+            user.activationCode= null
+            user.verified= true
+            user.save();
+            res.send({
+                message:"le Compte est active"
+            })
+        })
+}catch(err){
+    console.log(err)
+}
+  
 
 }
 

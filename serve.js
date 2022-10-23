@@ -17,6 +17,22 @@ const PORT = process.env.PORT || 8000
 app.use('/api', routerUser);
 
 
+
+app.all('*',(req,res,next) => {
+    const err = new Error(`can't find this route: ${req.originalUrl}`);
+    next(err.message)
+});
+
+// * handling middleware
+app.use((err,req,res,next)=>{
+
+    res.status(400).json({ err });
+
+});
+
+
+
+
 app.listen(PORT, (err)=> {
     if(!err){
     console.log(`the port ${PORT} is running`)

@@ -51,8 +51,6 @@ const Auth =(req,res,next) =>{
                     
                     }
 
-
-
                 }
                
     
@@ -105,7 +103,6 @@ for (let i =0; i<25;i++){
             sendConfirmationEmail(user.Email,user.activationCode)    
     })  
   
-
 };
 
 //*  desc =>  post verify
@@ -131,7 +128,6 @@ try{
     console.log(err)
 }
   
-
 }
 
 //*  desc =>  Post ForgetPassword

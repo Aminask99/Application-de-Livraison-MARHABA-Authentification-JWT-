@@ -6,9 +6,10 @@ const nodemailer = require("../Utils/nodmailer")
 
 
 
-//* nodemailer
-
-// !api/Auth=>Public:Post
+//*  desc =>  Register User
+//*  route  => api/Auth
+//*  methode =>   Post
+//*  access   => public
 
 const Auth =(req,res,next) =>{
     
@@ -37,9 +38,12 @@ const Auth =(req,res,next) =>{
                     }
 
                     if (user && PasswordValid && user.verified) {
-                        return res.send({
-                            message: "Login Succeful!"
+                        let token = jwt.sign({Name: user.Name}, 'verySecretValue',{expiresIn:'1h'})
+                        res.json({
+                            message:'Login Succeful!',
+                            token
                         })
+
                     }else{
                         return res.send({
                             message: "activate Gmail plz"
@@ -56,11 +60,13 @@ const Auth =(req,res,next) =>{
          
 }
 
-// !api/register=>Public:Post
+//*  desc =>  Register User
+//*  route  => api/Register
+//*  methode =>   Post
+//*  access   => public
 
 const Register = (req,res,next) => {
-const caracters =
-"0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+const caracters = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 let activationCode ="";
 for (let i =0; i<25;i++){
     activationCode+= caracters[Math.floor(Math.random() * caracters.length)];
@@ -101,7 +107,12 @@ for (let i =0; i<25;i++){
   
 
 };
-//* verifyUser
+
+//*  desc =>  post verify
+//*  route  => api/verifyUser/:activationCode
+//*  methode =>   Post
+//*  access   => public
+
 const verifyUser=(req,res)=>{
 try{
       User.findOneAndUpdate({activationCode:req.params.activationCode})
@@ -123,19 +134,114 @@ try{
 
 }
 
-// !api/forgetpassword=>Public:Post
+//*  desc =>  Post ForgetPassword
+//*  route  => api/Forgetpassword 
+//*  methode =>   Post
+//*  access   => public
 
-const Forgetpassword=(req,res)=>{
-    res.status(200).send('this a Forget Password function')
-    
+const Forgetpassword= async(req,res)=>{
+                const {Email} = req.body;
+                try{
+                const oldUser = await User.findOne({Email});
+                if(!oldUser){
+                return res.json({status : "User Not exists"});
+                
+                }
+
+                const secret = process.env.JWT_SECRET_KEY + oldUser.Password;
+                const token = jwt.sign({Email:oldUser.Email ,id:oldUser._id},secret,{
+                expiresIn:'5m'
+                });
+                const link =`http://localhost:8080/api/resetPassword/${oldUser._id}/${token}`;
+                let nodemailer = require('nodemailer');
+
+            let transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: 'aminasalik012@gmail.com',
+                pass: 'akleailxpsosubdh'
+            }
+            });
+
+            let mailOptions = {
+            from: 'aminasalik012@gmail.com',
+            to: Email,
+            subject: 'Sending Email using Node.js',
+            text: link
+            };
+
+            transporter.sendMail(mailOptions, function(error, info){
+            if (error) {
+                console.log(error);
+            } else {
+                console.log('Email sent: ' + info.response);
+            }
+            });
+            console.log(link);
+            }catch(error){
+                console.log(error)
+            }
+                
 }
 
-// !api/resetpassword=>Public:Post
+//*  desc =>  get Reset Password
+//*  route  => api/Resetpassword/:id/:token 
+//*  methode =>   get
+//*  access   => private
 
-const Resetpassword=(req,res)=>{
-    res.status(200).send('this a reset Password function of')
-    
+    const Resetpassword= async(req,res)=>{
+            const{id,token} =req.params;
+            console.log(req.params)
+
+            const oldUser = await User.findOne({ _id: id });
+            if(!oldUser){
+                return res.json({status : "User Not exists"});
+                
+            }
+            const secret = process.env.JWT_SECRET_KEY + oldUser.Password;
+            try{
+            const verify= jwt.verify(token,secret)
+            res.render("index",{Email:verify.Email})
+
+            }catch(error){
+            res.send("not verified")
+            }        
 }
 
+//*  desc =>  Post Reset Password
+//*  route  => api/Resetpassword/:id/:token 
+//*  methode =>   Post
+//*  access   => public
 
-module.exports={Auth,Register,verifyUser,Forgetpassword,Resetpassword}
+const getResetpassword= async(req,res)=>{
+         const{id,token} =req.params;
+         const {Password}=req.body
+  
+         const oldUser = await User.findOne({ _id: id });
+
+            if(!oldUser){
+             return res.json({status : "User Not exists !!"});
+      
+    }
+          const secret = process.env.JWT_SECRET_KEY + oldUser.Password;
+    try{
+          const verify= jwt.verify(token,secret);
+     
+          const encryptPass = await bcrypt.hash(Password,10);
+              await User.updateOne({
+                    _id:id,
+                },{
+                    $set:{
+                        Password: encryptPass,
+                    },
+                });
+             res.json({status:"Pssword Update"})
+    }catch(error){
+              res.json({status:"Pssword not Update"})
+    }
+
+  }
+
+   
+
+module.exports={Auth,Register,verifyUser,Forgetpassword,Resetpassword,getResetpassword}

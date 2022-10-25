@@ -2,7 +2,7 @@
 
 // !api/user/client/me=>Public:Post
 const Client=(req,res)=>{
-    res.send("haloo Auth");
+    res.status(200).send(req.body)
 }
 
 
